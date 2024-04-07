@@ -14,6 +14,5 @@ Python is required to run this code.
 **client.py**: To begin using, run the follow command:
 > python client.py
 
-
-
+This will prompt the User to enter the Port they wish to connect on, and a name that they wish to use for connections. After, the User will be presented with the following options:
 
