@@ -20,7 +20,7 @@ This will prompt the User to enter the Port they wish to connect on, and a name 
 - **_Receive_**: This will put the user in "receiving" mode. They will be listening on their port for any incoming messages, and once a message is received the port will no longer be listening
 - **_Disconnect_**: This will end the Users connection and exit the program
 - **_Register_**: The user will be prompted to provide the server's IP address and Port number. Once connected to the server, the server will add the User to its list of known Users. 
-    - ![#f03c15](**Note: This functionality is currently unavailable**)
+    - <span style="color:blue">**Note: This functionality is currently unavailable**</span>.
 
 
 **server.py**: To begin using, run the follow command:
