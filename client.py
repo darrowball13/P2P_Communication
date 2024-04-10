@@ -1,4 +1,6 @@
 import socket
+import re
+import sys
 
 # Reference: https://github.com/JeffC25/peer-to-peer/tree/main/src
 
@@ -11,31 +13,38 @@ class Client():
     # Initializes the client class with the port they want to connect on and the display name
     def __init__(self):
         SERVER = socket.gethostbyname(socket.gethostname())
-        servPort = input("Enter Client Port: ")
-
-        name = input('Whats the name?: ')
-        self.name = name
+        self.SERVER = SERVER
         
-        ADDR = (SERVER, int(servPort))
-        self.ADDR = ADDR
-
-        Clients[name] = ADDR
 
     # Binds the client socket for communications. Set up in a way to allow back and forth communication
     def start_client(self):
 
+        servPort = input("Enter Client Port: ")
+        name = input('Whats the name?: ')
+        check_servPort = santitize_input_port(servPort)
+        check_name = santitize_input_text(name)
+        if check_servPort == "Invalid" or check_name == "Invalid":
+            print("Client not initialized correctly. Exiting Program")
+            sys.exit()
+
+        self.name = name
+        
+        ADDR = (self.SERVER, int(servPort))
+        self.ADDR = ADDR
+
+        Clients[name] = ADDR
+
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = server
-        self.server.bind(client.ADDR)
+        self.server.bind(self.ADDR)
 
     # Connects to the designated port for message exchange
     def connect(self, friend, friend_port):
         self.server.connect((friend, friend_port))
 
-
     # Puts itself in listening mode in order to receive messages
     def listen(self):
-        self.server.listen(1)
+        self.server.listen()
         print(f'Listering on {self.ADDR}...')
         connection, addr = self.server.accept()
         return connection, addr
@@ -61,17 +70,35 @@ def user_options():
     command = input("Enter Command ('Register', 'Message', 'Users', 'Disconnect', 'Receive'): ")
     while not command:
         command = input("Enter Command ('Register', 'Message', 'Users', 'Disconnect', 'Receive'): ")
+        santitize_input_text(command)
     return command
+
+# Checks text inputs for validity (no special characters involved)
+def santitize_input_text(text):
+
+    if not re.match("^[a-zA-Z0-9]*$", text):
+        print("Enter valid text")
+        return "Invalid"
+    else:
+        return text
+    
+# Check numerical inputs for validity (only includes numbers 0-9, no text or special characters)
+def santitize_input_port(input):
+    if not re.match("^[0-9]*$", input):
+        print("Enter a valid port number")
+        return "Invalid"
+    else:
+        return int(input)
 
 # Starts up the Client instance
 print("Logging on...")
 client = Client()
+client.start_client()
 
 # Handles the user_option inputs
 while True:
 
-    # Binds the Client Socket and initiates user_options
-    client.start_client()
+    # initiates user_options
     command = user_options()
 
     if command == "Users":
@@ -82,9 +109,15 @@ while True:
     # Sends out the chat message to friend, then closes connection to them after in order to be able to receive
     elif command == "Message":
         friend = input("Friend IP: ")
-        friend_port = int(input("Friend Server Port: "))
+        friend_port = input("Friend Server Port: ")
 
-        client.connect(friend, friend_port)
+        # Checks input port for validiity. If invalid, returns to main menu
+        check_port = santitize_input_port(friend_port)
+        if check_port == "Invalid":
+            print("Returning to Main Menu...")
+            continue
+
+        client.connect(friend, check_port)
 
         chat = input("Enter Message: ")
         client.send_Message(chat)
