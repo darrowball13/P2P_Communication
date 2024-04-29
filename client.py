@@ -1,6 +1,8 @@
 import socket
 import re
 import sys
+import sqlite3
+import datetime
 
 # Reference: https://github.com/JeffC25/peer-to-peer/tree/main/src
 
@@ -28,6 +30,7 @@ class Client():
             sys.exit()
 
         self.name = name
+        self.servPort = servPort
         
         ADDR = (self.SERVER, int(servPort))
         self.ADDR = ADDR
@@ -95,6 +98,29 @@ print("Logging on...")
 client = Client()
 client.start_client()
 
+
+# Create a messages database with a messages table if it doesn't already exist. This will store all messages sent/received
+# by the current user
+db_connect = sqlite3.connect("messages.db")
+
+db_cur = db_connect.cursor()
+
+# Creates table in database. Note name not included right now
+db_cur.execute('''
+CREATE TABLE IF NOT EXISTS messages (
+    id INT PRIMARY KEY,
+    sender_ip TEXT NOT NULL,
+    sender_port INT NOT NULL,
+    receiver_ip TEXT NOT NULL, 
+    receiver_port INT NOT NULL,                         
+    message TEXT NOT NULL,
+    time_sent TIMESTAMP NOT NULL)''')
+
+
+db_connect.commit()
+db_connect.close()
+
+
 # Handles the user_option inputs
 while True:
 
@@ -122,6 +148,21 @@ while True:
         chat = input("Enter Message: ")
         client.send_Message(chat)
         client.server.close()
+
+        message_connect = sqlite3.connect("messages.db")
+        message_cur = message_connect.cursor()
+
+        current_time = datetime.datetime.now()
+
+        # Insert message data into database table
+        sql = """INSERT INTO messages (sender_ip, sender_port, receiver_ip, receiver_port, message, time_sent)
+                VALUES (?, ?, ?, ?, ?, ?)"""
+        message_cur.execute(sql, (client.SERVER, client.servPort, friend, friend_port, chat, current_time))
+
+        # Commit the changes to the database and close db connection
+        message_connect.commit()
+        message_connect.close()
+
         continue
     
     # Disconnects the User
